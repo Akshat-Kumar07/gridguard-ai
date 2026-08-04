@@ -6,8 +6,9 @@ import {
   FeederFaultRequest,
   NoiseRequest,
   RepairRequest,
+  SpanRepairRequest,
+  FeederRepairRequest,
 } from "@/types";
-
 /**
  * Fault Simulator Service
  * All endpoints use existing backend APIs
@@ -45,10 +46,35 @@ export async function injectNoise(
   return response.data;
 }
 
-/** POST /faults/repair — Repair fault by restoring all poles of a transformer */
-export async function repairFault(
+/** POST /faults/repair/span */
+export async function repairSpanFault(
+  data: SpanRepairRequest
+): Promise<ApiMessageResponse> {
+  const response = await api.post<ApiMessageResponse>(
+    "/faults/repair/span",
+    data
+  );
+  return response.data;
+}
+
+/** POST /faults/repair/dt */
+export async function repairDtFault(
   data: RepairRequest
 ): Promise<ApiMessageResponse> {
-  const response = await api.post<ApiMessageResponse>("/faults/repair", data);
+  const response = await api.post<ApiMessageResponse>(
+    "/faults/repair/dt",
+    data
+  );
+  return response.data;
+}
+
+/** POST /faults/repair/feeder */
+export async function repairFeederFault(
+  data: FeederRepairRequest
+): Promise<ApiMessageResponse> {
+  const response = await api.post<ApiMessageResponse>(
+    "/faults/repair/feeder",
+    data
+  );
   return response.data;
 }

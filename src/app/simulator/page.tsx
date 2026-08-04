@@ -18,8 +18,10 @@ import {
   injectSpanFault,
   injectDtFault,
   injectFeederFault,
+  repairSpanFault,
+  repairDtFault,
+  repairFeederFault,
   injectNoise,
-  repairFault,
 } from "@/services/faultService";
 
 /* ────────────────────────────────────────────────────────
@@ -124,22 +126,53 @@ const CARDS: SimCardConfig[] = [
     buttonLabel: "Inject Noise",
   },
   {
-    id: "repair",
-    title: "Repair",
-    description:
-      "Restore power on a distribution transformer by repairing all associated poles.",
-    icon: Wrench,
-    accentColor: "#10B981",
-    accentBg: "bg-emerald-50",
-    accentBorder: "border-emerald-200",
-    accentText: "text-emerald-600",
-    btnClass:
-      "bg-emerald-600 hover:bg-emerald-700 focus-visible:ring-emerald-500/30 text-white",
-    inputType: "text",
-    inputLabel: "Transformer Code",
-    inputPlaceholder: "e.g., DT001",
-    buttonLabel: "Execute Repair",
+  id: "repair-dt",
+  title: "DT Repair",
+  description: "Restore power to all poles connected to a distribution transformer.",
+  icon: Wrench,
+  accentColor: "#10B981",
+  accentBg: "bg-emerald-50",
+  accentBorder: "border-emerald-200",
+  accentText: "text-emerald-600",
+  btnClass:
+    "bg-emerald-600 hover:bg-emerald-700 focus-visible:ring-emerald-500/30 text-white",
+  inputType: "text",
+  inputLabel: "Transformer Code",
+  inputPlaceholder: "e.g., DT001",
+  buttonLabel: "Repair DT",
   },
+  {
+  id: "repair-span",
+  title: "Span Repair",
+  description: "Restore power to a single pole span.",
+  icon: Wrench,
+  accentColor: "#22C55E",
+  accentBg: "bg-green-50",
+  accentBorder: "border-green-200",
+  accentText: "text-green-600",
+  btnClass:
+    "bg-green-600 hover:bg-green-700 focus-visible:ring-green-500/30 text-white",
+  inputType: "text",
+  inputLabel: "Pole Code",
+  inputPlaceholder: "e.g., P00001",
+  buttonLabel: "Repair Span",
+  },
+  {
+  id: "repair-feeder",
+  title: "Feeder Repair",
+  description: "Restore power to all poles connected to a feeder.",
+  icon: Wrench,
+  accentColor: "#14B8A6",
+  accentBg: "bg-teal-50",
+  accentBorder: "border-teal-200",
+  accentText: "text-teal-600",
+  btnClass:
+    "bg-teal-600 hover:bg-teal-700 focus-visible:ring-teal-500/30 text-white",
+  inputType: "text",
+  inputLabel: "Feeder Code",
+  inputPlaceholder: "e.g., F001",
+  buttonLabel: "Repair Feeder",
+},
 ];
 
 /* ────────────────────────────────────────────────────────
@@ -173,8 +206,22 @@ function SimulatorCard({ config }: { config: SimCardConfig }) {
         case "noise":
           response = await injectNoise({ choice: value });
           break;
-        case "repair":
-          response = await repairFault({ transformer_code: value.trim() });
+        case "repair-dt":
+          response = await repairDtFault({
+          transformer_code: value.trim(),
+      });
+        break;
+
+        case "repair-span":
+          response = await repairSpanFault({
+            pole_code: value.trim(),
+          });
+          break;
+
+        case "repair-feeder":
+          response = await repairFeederFault({
+            feeder_code: value.trim(),
+          });
           break;
         default:
           throw new Error("Unknown card type");

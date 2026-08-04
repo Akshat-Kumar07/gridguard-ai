@@ -158,6 +158,14 @@ export interface RepairRequest {
   transformer_code: string;
 }
 
+export interface SpanRepairRequest {
+  pole_code: string;
+}
+
+export interface FeederRepairRequest {
+  feeder_code: string;
+}
+
 // --- API Response ---
 
 export interface ApiMessageResponse {
