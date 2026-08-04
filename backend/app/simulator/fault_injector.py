@@ -6,7 +6,7 @@ import requests
 from app.core.database import SessionLocal
 from app.models import Pole, Transformer, Feeder, Telemetry
 
-BASE_URL = "http://127.0.0.1:8000"
+BASE_URL = "https://gridguard-ai-18s4.onrender.com"
 
 
 def get_next_sequence(db, pole):
