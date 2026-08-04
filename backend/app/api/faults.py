@@ -5,6 +5,8 @@ from app.schemas.fault import (
     DTFaultRequest,
     FeederFaultRequest,
     RepairRequest,
+    SpanRepairRequest,
+    FeederRepairRequest,
     NoiseRequest
 )
 
@@ -14,9 +16,14 @@ from app.simulator.fault_injector import (
     inject_feeder_fault
 )
 
-from app.simulator.repair import repair_fault
 
 from app.simulator.noise import inject_noise
+
+from app.simulator.repair import (
+    repair_dt_fault,
+    repair_span_fault,
+    repair_feeder_fault
+)
 
 router = APIRouter(
     prefix="/faults",
@@ -66,11 +73,29 @@ def noise(request: NoiseRequest):
         "message": "Noise Injected"
     }
 
-@router.post("/repair")
-def repair(request: RepairRequest):
+@router.post("/repair/dt")
+def repair_dt(request: RepairRequest):
 
-    repair_fault(request.transformer_code)
+    repair_dt_fault(request.transformer_code)
 
     return {
-        "message": "Repair Completed"
+        "message": "DT Repair Completed"
+    }
+
+@router.post("/repair/span")
+def repair_span(request: SpanRepairRequest):
+
+    repair_span_fault(request.pole_code)
+
+    return {
+        "message": "Span Repair Completed"
+    }
+
+@router.post("/repair/feeder")
+def repair_feeder(request: FeederRepairRequest):
+
+    repair_feeder_fault(request.feeder_code)
+
+    return {
+        "message": "Feeder Repair Completed"
     }
