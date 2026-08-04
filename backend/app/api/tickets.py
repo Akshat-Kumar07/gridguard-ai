@@ -132,6 +132,11 @@ def get_all_tickets(
 
             "pole_code": ticket.pole.pole_code,
 
+            "location": (
+    f"{ticket.pole.transformer.transformer_code} → "
+    f"{ticket.pole.pole_code}"
+),
+
             "title": ticket.title,
 
             "description": ticket.description,
