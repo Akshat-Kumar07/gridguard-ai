@@ -69,7 +69,7 @@ const CARDS: SimCardConfig[] = [
       "bg-red-600 hover:bg-red-700 focus-visible:ring-red-500/30 text-white",
     inputType: "text",
     inputLabel: "Pole Code",
-    inputPlaceholder: "e.g., P001",
+    inputPlaceholder: "e.g., P00001",
     buttonLabel: "Inject Span Fault",
   },
   {
