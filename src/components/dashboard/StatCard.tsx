@@ -52,7 +52,7 @@ const colorMap = {
 
 function useCountUp(target: number, duration: number = 1200) {
   const [count, setCount] = useState(0);
-  const frameRef = useRef<number>();
+  const frameRef = useRef<number | null>(null);
 
   useEffect(() => {
     const startTime = performance.now();
@@ -73,7 +73,7 @@ function useCountUp(target: number, duration: number = 1200) {
     frameRef.current = requestAnimationFrame(animate);
 
     return () => {
-      if (frameRef.current) {
+      if (frameRef.current !== null) {
         cancelAnimationFrame(frameRef.current);
       }
     };
