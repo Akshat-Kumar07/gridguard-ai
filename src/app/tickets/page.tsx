@@ -409,7 +409,7 @@ export default function TicketsPage() {
                   Ticket ID
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  Pole Code
+                  Location
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
                   Title
@@ -490,7 +490,7 @@ export default function TicketsPage() {
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
                       <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">
-                        {ticket.pole_code || `P-${ticket.pole_id}`}
+                        {ticket.location || ticket.pole_code || `P-${ticket.pole_id}`}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-slate-700 max-w-[200px] truncate">

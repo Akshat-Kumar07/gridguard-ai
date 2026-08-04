@@ -110,6 +110,7 @@ export interface Ticket {
   created_at: string;
   closed_at: string | null;
   pole_code?: string;
+  location?: string;
 }
 
 // --- Scheduled Outages ---
