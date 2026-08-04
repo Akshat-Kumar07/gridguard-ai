@@ -1,305 +1,225 @@
 from app.core.database import SessionLocal
+import random
+
 from app.models import (
     Feeder,
     Transformer,
     Pole,
-    PoleStatus
+    PoleStatus,
+    Telemetry,
+    Ticket,
+    ScheduledOutage
 )
 
 from datetime import datetime
 
-from app.models import ScheduledOutage
 
 def seed_database():
 
     db = SessionLocal()
 
+    print("Clearing old data...")
+
+    db.query(Telemetry).delete()
+    db.query(Ticket).delete()
+    db.query(PoleStatus).delete()
+    db.query(ScheduledOutage).delete()
+    db.query(Pole).delete()
+    db.query(Transformer).delete()
+    db.query(Feeder).delete()
+
+    db.commit()
+
+    print("Database cleared.")
+
     try:
 
-        # Prevent duplicate data
-        if db.query(Feeder).first():
-            print("Database already seeded!")
-            return
+        print("Creating Feeders...")
 
-                # -----------------------------
-        # Create Feeder
-        # -----------------------------
-        feeder = Feeder(
-            feeder_code="F001",
-            name="North Bangalore Feeder",
-            location="Bangalore"
-        )
+        feeders = []
 
-        db.add(feeder)
+        for i in range(1, 32):
+
+            feeder = Feeder(
+                feeder_code=f"F{i:03}",
+                name=f"Feeder {i}",
+                location="Bangalore"
+            )
+
+            db.add(feeder)
+            feeders.append(feeder)
+
         db.commit()
-        db.refresh(feeder)
 
-                # -----------------------------
-        # Create Transformer 1
-        # -----------------------------
-        dt1 = Transformer(
-            transformer_code="DT001",
-            name="Distribution Transformer 1",
-            capacity_kva=250,
-            latitude=12.9715,
-            longitude=77.5945,
-            households_served=500,
-            feeder_id=feeder.id
-        )
+        for feeder in feeders:
+            db.refresh(feeder)
 
-        db.add(dt1)
+        print(f"{len(feeders)} Feeders Created")
+
+
+        print("Creating Transformers...")
+
+        transformers = []
+
+        counter = 1
+
+        for feeder in feeders:
+
+            dt_count = 13
+
+            if feeder == feeders[-1]:
+                dt_count = 22      # Last feeder gets extra DTs
+
+            for _ in range(dt_count):
+
+                transformer = Transformer(
+
+                    transformer_code=f"DT{counter:03}",
+
+                    name=f"Distribution Transformer {counter}",
+
+                    capacity_kva=random.choice([100,160,250,315]),
+
+                    latitude=12.90 + random.random()*0.20,
+
+                    longitude=77.45 + random.random()*0.25,
+
+                    households_served=random.randint(80,600),
+
+                    feeder_id=feeder.id
+
+                )
+
+                db.add(transformer)
+
+                transformers.append(transformer)
+
+                counter += 1
+
         db.commit()
-        db.refresh(dt1)
 
-                # -----------------------------
-        # Create Transformer 2
-        # -----------------------------
-        dt2 = Transformer(
-            transformer_code="DT002",
-            name="Distribution Transformer 2",
-            capacity_kva=315,
-            latitude=12.9750,
-            longitude=77.5980,
-            households_served=650,
-            feeder_id=feeder.id
-        )
+        for transformer in transformers:
+            db.refresh(transformer)
 
-        db.add(dt2)
+        print(f"{len(transformers)} Transformers Created")
+
+        TOTAL_POLES = 38400
+        TOTAL_TRANSFORMERS = 412
+        TOTAL_DEVICE_POLES = 34900
+
+
+        print("Creating Poles...")
+
+        poles = []
+
+        pole_counter = 1
+
+        for index, transformer in enumerate(transformers):
+
+            # Average ≈93 poles per transformer
+            remaining_poles = TOTAL_POLES - (pole_counter - 1)
+
+            remaining_transformers = TOTAL_TRANSFORMERS - index
+
+            if remaining_transformers == 1:
+                pole_count = remaining_poles
+            else:
+                avg = remaining_poles // remaining_transformers
+
+                pole_count = random.randint(
+                    max(9, avg - 20),
+                    min(240, avg + 20)
+                )
+
+            parent_id = None
+
+            for seq in range(1, pole_count + 1):
+
+                device = None
+
+                # Around 91% poles have telemetry devices
+                device = None
+
+                if pole_counter <= TOTAL_DEVICE_POLES:
+                    device = f"DEV-{pole_counter:06}"
+
+                pole = Pole(
+
+                    pole_code=f"P{pole_counter:05}",
+
+                    latitude=transformer.latitude + random.uniform(-0.002, 0.002),
+
+                    longitude=transformer.longitude + random.uniform(-0.002, 0.002),
+
+                    device_id=device,
+
+                    seq_on_line=seq,
+
+                    pole_type=(
+                        "Root" if seq == 1
+                        else "Leaf" if seq == pole_count
+                        else "Intermediate"
+                    ),
+
+                    ward=f"Ward-{random.randint(1,20):02}",
+
+                    pincode=f"560{random.randint(1,999):03}",
+
+                    transformer_id=transformer.id,
+
+                    parent_pole_id=parent_id
+                )
+
+                db.add(pole)
+
+                db.flush()
+
+                parent_id = pole.id
+
+                poles.append(pole)
+
+                pole_counter += 1
+
         db.commit()
-        db.refresh(dt2)
+
+        print(f"{len(poles)} Poles Created")
 
 
-                # -----------------------------
-        # Create Pole P001 (Root Pole)
         # -----------------------------
-        p1 = Pole(
-            pole_code="P001",
-            latitude=12.9716,
-            longitude=77.5946,
-            device_id="DEV-P001",
-            seq_on_line=1,
-            pole_type="Root",
-            ward="Ward-01",
-            pincode="560001",
-            transformer_id=dt1.id,
-            parent_pole_id=None
-        )
-
-        db.add(p1)
-        db.commit()
-        db.refresh(p1)
-
-
-                # -----------------------------
-        # Create Pole P002
-        # -----------------------------
-        p2 = Pole(
-            pole_code="P002",
-            latitude=12.9717,
-            longitude=77.5947,
-            device_id="DEV-P002",
-            seq_on_line=2,
-            pole_type="Intermediate",
-            ward="Ward-01",
-            pincode="560001",
-            transformer_id=dt1.id,
-            parent_pole_id=p1.id
-        )
-
-        db.add(p2)
-        db.commit()
-        db.refresh(p2)
-
-                # -----------------------------
-        # Create Pole P003
-        # -----------------------------
-        p3 = Pole(
-            pole_code="P003",
-            latitude=12.9718,
-            longitude=77.5948,
-            device_id="DEV-P003",
-            seq_on_line=3,
-            pole_type="Intermediate",
-            ward="Ward-01",
-            pincode="560001",
-            transformer_id=dt1.id,
-            parent_pole_id=p2.id
-        )
-
-        db.add(p3)
-        db.commit()
-        db.refresh(p3)
-
-
-                # -----------------------------
-        # Create Pole P004
-        # -----------------------------
-        p4 = Pole(
-            pole_code="P004",
-            latitude=12.9719,
-            longitude=77.5949,
-            device_id="DEV-P004",
-            seq_on_line=4,
-            pole_type="Leaf",
-            ward="Ward-01",
-            pincode="560001",
-            transformer_id=dt1.id,
-            parent_pole_id=p3.id
-        )
-
-        db.add(p4)
-        db.commit()
-        db.refresh(p4)
-
-
-                # -----------------------------
-        # Create Pole P005 (Root Pole of DT002)
-        # -----------------------------
-        p5 = Pole(
-            pole_code="P005",
-            latitude=12.9751,
-            longitude=77.5981,
-            device_id="DEV-P005",
-            seq_on_line=1,
-            pole_type="Root",
-            ward="Ward-02",
-            pincode="560002",
-            transformer_id=dt2.id,
-            parent_pole_id=None
-        )
-
-        db.add(p5)
-        db.commit()
-        db.refresh(p5)
-
-                # -----------------------------
-        # Create Pole P006
-        # -----------------------------
-        p6 = Pole(
-            pole_code="P006",
-            latitude=12.9752,
-            longitude=77.5982,
-            device_id="DEV-P006",
-            seq_on_line=2,
-            pole_type="Intermediate",
-            ward="Ward-02",
-            pincode="560002",
-            transformer_id=dt2.id,
-            parent_pole_id=p5.id
-        )
-
-        db.add(p6)
-        db.commit()
-        db.refresh(p6)
-
-
-                # -----------------------------
-        # Create Pole P007
-        # -----------------------------
-        p7 = Pole(
-            pole_code="P007",
-            latitude=12.9753,
-            longitude=77.5983,
-            device_id="DEV-P007",
-            seq_on_line=3,
-            pole_type="Intermediate",
-            ward="Ward-02",
-            pincode="560002",
-            transformer_id=dt2.id,
-            parent_pole_id=p6.id
-        )
-
-        db.add(p7)
-        db.commit()
-        db.refresh(p7)
-
-                # -----------------------------
-        # Create Pole P008
-        # -----------------------------
-        p8 = Pole(
-            pole_code="P008",
-            latitude=12.9754,
-            longitude=77.5984,
-            device_id="DEV-P008",
-            seq_on_line=4,
-            pole_type="Leaf",
-            ward="Ward-02",
-            pincode="560002",
-            transformer_id=dt2.id,
-            parent_pole_id=p7.id
-        )
-
-        db.add(p8)
-        db.commit()
-        db.refresh(p8)
-
-                # -----------------------------
         # Initialize Pole Status
         # -----------------------------
-        all_poles = (
-            db.query(Pole)
-            .all()
-        )
+        print("Creating Pole Status...")
+
+        statuses = []
+
+        all_poles = db.query(Pole).all()
 
         for pole in all_poles:
 
-            existing_status = (
-            db.query(PoleStatus)
-            .filter(
-                PoleStatus.pole_id == pole.id
-        )
-            .first()
-    )
+            statuses.append(
 
-            if existing_status:
-                continue
+                PoleStatus(
+                    pole_id=pole.id,
+                    energized=True,
+                    last_event="boot"
+                )
 
-            status = PoleStatus(
-                pole_id=pole.id,
-                energized=True,
-                last_event="boot"
-    )
+            )
 
-            db.add(status)
+        db.add_all(statuses)
 
         db.commit()
 
-        outage1 = ScheduledOutage(
-            outage_id="SO-2026-07-29-014",
-            scope="feeder",
-            target_id="F001",
-            start=datetime.fromisoformat(
-                "2026-07-29T10:00:00"
-            ),
-            end=datetime.fromisoformat(
-                "2026-07-29T12:30:00"
-            ),
-            reason="Planned maintenance - jumper replacement"
-)
+        print(f"{len(statuses)} Pole Status Records Created")
+        print("=" * 50)
+        print("DATABASE SEEDED SUCCESSFULLY")
+        print(f"Feeders      : {len(feeders)}")
+        print(f"Transformers : {len(transformers)}")
+        print(f"Poles        : {len(poles)}")
+        print(f"Pole Status  : {len(statuses)}")
+        print("=" * 50)
 
-        outage2 = ScheduledOutage(
-            outage_id="SO-2026-07-29-021",
-            scope="dt",
-            target_id="DT002",
-            start=datetime.fromisoformat(
-                "2026-07-29T14:00:00"
-            ),
-            end=datetime.fromisoformat(
-                "2026-07-29T15:00:00"
-            ),
-            reason="Load shedding"
-)
-
-        db.add(outage1)
-        db.add(outage2)
-
-        db.commit()
-
-        print("Scheduled Outages initialized successfully!")
-
-        print("Pole Status initialized successfully!")
-
-        print("Database seeded successfully!")
+        
 
     finally:
         db.close()

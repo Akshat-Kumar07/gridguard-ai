@@ -109,3 +109,41 @@ def resolve(
         "message": "Ticket resolved.",
         "ticket": ticket
     }
+
+@router.get("/")
+def get_all_tickets(
+    db: Session = Depends(get_db)
+):
+
+    tickets = (
+        db.query(Ticket)
+        .all()
+    )
+
+    result = []
+
+    for ticket in tickets:
+
+        result.append({
+
+            "id": ticket.id,
+
+            "pole_id": ticket.pole_id,
+
+            "pole_code": ticket.pole.pole_code,
+
+            "title": ticket.title,
+
+            "description": ticket.description,
+
+            "status": ticket.status,
+
+            "priority": ticket.priority,
+
+            "created_at": ticket.created_at,
+
+            "closed_at": ticket.closed_at
+
+        })
+
+    return result
