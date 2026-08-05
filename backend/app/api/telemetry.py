@@ -51,6 +51,8 @@ def get_all_telemetry(
 
             "pole_id": telemetry.pole_id,
 
+            "pole_code": telemetry.pole.pole_code,
+
             "device_id": telemetry.device_id,
 
             "event": telemetry.event,
